@@ -1,6 +1,8 @@
-﻿# WQF7007 Automated CV Parser
+# WQF7007 Automated CV Parser
 
 Automated CV parser for structured detail extraction.
+
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/yousef-awad/wqf7007-automated-cv-parser/blob/main/notebooks/01_project_setup.ipynb)
 
 ## Project Scope
 - Extract structured candidate information from unstructured CVs/resumes
