@@ -6,3 +6,11 @@ venv/
 env/
 .DS_Store
 Thumbs.db
+.env
+# Ignore all data files by default
+data/**
+# Un-ignore the processed directory so the negation below can work
+!data/processed/
+# Annotated CSV is tracked via Git LFS — too expensive to regenerate (Gemini API cost)
+!data/processed/resume_bio_annotated_full.csv
+# Arrow files are regenerable from CSV for free (Steps 5-7 of 04_full_pipeline.ipynb)
