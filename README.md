@@ -15,7 +15,8 @@ notebooks/
 data/
   processed/
     resume_bio_annotated_full.csv   ← Gemini-annotated BIO labels (Git LFS, ~54 MB)
-    resume_ner_hf/                  ← HF DatasetDict (not in git — regenerate, see below)
+    resume_ner_hf/                  ← BERT HF DatasetDict (not in git — regenerate, see below)
+    resume_ner_hf_roberta-base/     ← RoBERTa HF DatasetDict when MODEL_CHECKPOINT="roberta-base"
 ```
 
 ---
@@ -35,14 +36,15 @@ pip install datasets transformers torch pandas scikit-learn
 
 Open `notebooks/04_full_pipeline.ipynb` and run all cells.  
 Steps 1–4 (Gemini annotation) will **auto-skip** — the annotated CSV is already present. No API key needed.  
-Steps 5–7 (tokenizer alignment → save) complete in ~1 minute and write `data/processed/resume_ner_hf/`.
+Steps 5–7 (tokenizer alignment → save) complete in ~1 minute and write `data/processed/resume_ner_hf/` for BERT. If `MODEL_CHECKPOINT = "roberta-base"`, they write `data/processed/resume_ner_hf_roberta-base/`.
 
 ### 3. Load in your trainer
 
 ```python
 from datasets import load_from_disk
 
-ds = load_from_disk("data/processed/resume_ner_hf")
+ds = load_from_disk("data/processed/resume_ner_hf")  # BERT
+# ds = load_from_disk("data/processed/resume_ner_hf_roberta-base")  # RoBERTa
 # ds["train"], ds["validation"], ds["test"]
 ```
 
@@ -58,7 +60,7 @@ ds = load_from_disk("data/processed/resume_ner_hf")
 
 Each row is a 512-token sliding-window chunk (stride = 128). Long resumes produce multiple consecutive chunks sharing the same `resume_idx`.
 
-**Fields:** `input_ids`, `attention_mask`, `token_type_ids`, `labels`, `job_category`, `resume_idx`
+**Fields:** `input_ids`, `attention_mask`, `labels`, `job_category`, `resume_idx`; BERT also includes `token_type_ids`. RoBERTa usually does not.
 
 **Label map:**
 
@@ -78,8 +80,8 @@ Each row is a 512-token sliding-window chunk (stride = 128). Long resumes produc
 ## Important Notes
 
 - **Do not delete `resume_bio_annotated_full.csv`** — it was generated via the Gemini API and costs money to reproduce.
-- `data/processed/resume_ner_hf/` is excluded from git (arrow files are large and fully reproducible). Regenerate with Steps 5–7 of the notebook.
-- Base model: `bert-base-uncased`. To switch models, change `MODEL_CHECKPOINT` and `STRIDE` in the config cell of the notebook and re-run Steps 5–7.
+- `data/processed/resume_ner_hf*/` is excluded from git (arrow files are large and fully reproducible). Regenerate with Steps 5–7 of the notebook.
+- Base model: `bert-base-uncased`. To build RoBERTa inputs, set `MODEL_CHECKPOINT = "roberta-base"` in the config cell and re-run Steps 5–7. The notebook automatically uses `add_prefix_space=True` and writes a separate RoBERTa output folder.
 
 ---
 
