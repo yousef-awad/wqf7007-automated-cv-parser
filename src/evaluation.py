@@ -104,8 +104,13 @@ def predict_with_crf(model, dataset, data_collator, device, batch_size=4):
     model.eval()
     model.to(device)
 
+    # Keep only the fields the data collator / model need
+    tensor_cols = ["input_ids", "attention_mask", "token_type_ids", "labels"]
+    cols_to_remove = [c for c in dataset.column_names if c not in tensor_cols]
+    clean_dataset = dataset.remove_columns(cols_to_remove)
+
     loader = DataLoader(
-        dataset=dataset,
+        dataset=clean_dataset,
         batch_size=batch_size,
         collate_fn=data_collator
     )
@@ -129,18 +134,25 @@ def predict_with_crf(model, dataset, data_collator, device, batch_size=4):
             )
 
             labels = batch["labels"].cpu().numpy()
+            attn_masks = batch["attention_mask"].cpu().numpy()
 
-            for pred_seq, label_seq in zip(decoded, labels):
-                
+            for pred_seq, label_seq, attn in zip(decoded, labels, attn_masks):
+                # pred_seq has one entry per real token (attention_mask==1),
+                # including [CLS] and [SEP] which have label -100.
                 full_preds = []
                 pred_idx = 0
 
-                for l in label_seq:
-                    if int(l) == -100:
+                for pos, l in enumerate(label_seq):
+                    if int(attn[pos]) == 0:
+                        # Padding position — no prediction
                         full_preds.append(-100)
                     else:
-                        full_preds.append(pred_seq[pred_idx])
-                        pred_idx += 1
+                        # Real token (CLS, SEP, subword, or labelled token)
+                        if int(l) == -100:
+                            full_preds.append(-100)
+                        else:
+                            full_preds.append(pred_seq[pred_idx])
+                        pred_idx += 1  # always advance for real (non-pad) tokens
 
                 all_preds.append(full_preds)
                 all_labels.append(label_seq)

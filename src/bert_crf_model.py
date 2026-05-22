@@ -32,13 +32,14 @@ class BertCRFForNER(nn.Module):
         loss = None
 
         if labels is not None:
-            # CRF mask
-            mask = (labels != -100)
-            
+            # Use attention_mask as CRF mask so the first timestep ([CLS]) is
+            # always "on", satisfying the torchcrf requirement.
             if attention_mask is not None:
-                mask = mask & attention_mask.bool()
+                mask = attention_mask.bool()
+            else:
+                mask = torch.ones(input_ids.shape, dtype=torch.bool, device=input_ids.device)
 
-            # CRF cannot accept -100 labels, so replace ignore labels with 0
+            # CRF cannot accept -100 labels, so replace ignore labels with 0 (O)
             labels_for_crf = labels.clone()
             labels_for_crf[labels_for_crf == -100] = 0
 
@@ -70,16 +71,12 @@ class BertCRFForNER(nn.Module):
         sequence_output = self.dropout(outputs.last_hidden_state) 
         emissions = self.classifier(sequence_output)
 
-        if labels is not None:
-            mask = (labels != -100) 
-            
-            if attention_mask is not None:
-                mask = mask & attention_mask.bool()
+        # Always use attention_mask for CRF decode so [CLS] (position 0)
+        # is included — torchcrf requires the first timestep to be unmasked.
+        if attention_mask is not None:
+            mask = attention_mask.bool()
         else:
-            if attention_mask is not None:
-                mask = attention_mask.bool()
-            else:
-                mask = torch.ones_like(input_ids).bool()
+            mask = torch.ones(input_ids.shape, dtype=torch.bool, device=input_ids.device)
 
         decoded = self.crf.decode(emissions=emissions, mask=mask)       # best valid sequence across tokens
 
