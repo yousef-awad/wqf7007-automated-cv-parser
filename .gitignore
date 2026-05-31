@@ -14,3 +14,6 @@ data/**
 # Annotated CSV is tracked via Git LFS — too expensive to regenerate (Gemini API cost)
 !data/processed/resume_bio_annotated_full.csv
 # Arrow files are regenerable from CSV for free (Steps 5-7 of 04_full_pipeline.ipynb)
+checkpoints
+exported_models
+scripts
