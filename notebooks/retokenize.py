@@ -46,9 +46,13 @@ print(f"Output    : {OUT_HF.resolve()}")
 # ── Load CSV ──────────────────────────────────────────────────────────────────
 df_all   = pd.read_csv(IN_CSV)
 df_train = df_all[df_all["split"] == "train"].reset_index(drop=True)
-df_val   = df_all[df_all["split"] == "val"].reset_index(drop=True)
+df_val   = df_all[df_all["split"].isin(["val", "validation"])].reset_index(drop=True)
 df_test  = df_all[df_all["split"] == "test"].reset_index(drop=True)
 print(f"Loaded CSV: train={len(df_train):,} / val={len(df_val):,} / test={len(df_test):,}")
+
+if df_train.empty or df_val.empty or df_test.empty:
+    split_counts = df_all["split"].value_counts(dropna=False).to_dict()
+    raise ValueError(f"One or more splits are empty after filtering. CSV split counts: {split_counts}")
 
 # ── Tokenizer ─────────────────────────────────────────────────────────────────
 tok_kwargs = {"add_prefix_space": True} if "roberta" in MODEL_CHECKPOINT.lower() else {}

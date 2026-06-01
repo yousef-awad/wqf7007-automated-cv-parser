@@ -7,6 +7,23 @@ NLP pipeline to extract structured candidate information from unstructured resum
 
 ---
 
+## ✅ Finalized Labelled Dataset
+
+`data/processed/resume_bio_annotated_full.csv` now holds the **chosen, finalized labelled dataset** — the "dataset 4" relabel produced with **Vertex AI Gemini 3.1 Flash-Lite** (LOW thinking, relaxed SKILL policy, section-aware chunking; see `notebooks/relabel_vertex_parallel.py`). This supersedes all earlier annotation passes and is the dataset to train and evaluate against going forward.
+
+It was selected after a head-to-head against the previous relabel: it is the best dataset on **both** models, mainly by recovering SKILL quality while keeping the EDUCATION / JOB_TITLE gains.
+
+**Resume-level test F1 (same label inventory, ~10.6k spans):**
+
+| Model | Prev relabel | **Finalized (dataset 4)** | EDUCATION | JOB_TITLE | SKILL |
+|---|---|---|---|---|---|
+| BERT (`bert-base-uncased`) | 0.578 | **0.587** | 0.643 | 0.710 | 0.527 |
+| RoBERTa (`roberta-base`) | 0.640 | **0.657** | 0.710 | 0.784 | 0.600 |
+
+RoBERTa (lr 3e-5, 5 epochs) remains the best model at **0.657** test F1.
+
+---
+
 ## Repository Layout
 
 ```
@@ -14,7 +31,7 @@ notebooks/
   04_full_pipeline.ipynb   ← single source of truth for the data pipeline
 data/
   processed/
-    resume_bio_annotated_full.csv   ← Gemini-annotated BIO labels (Git LFS, ~54 MB)
+    resume_bio_annotated_full.csv   ← FINALIZED BIO labels, dataset 4 / Vertex Gemini 3.1 Flash-Lite (Git LFS, ~69 MB)
     resume_ner_hf/                  ← BERT HF DatasetDict (not in git — regenerate, see below)
     resume_ner_hf_roberta-base/     ← RoBERTa HF DatasetDict when MODEL_CHECKPOINT="roberta-base"
 ```
@@ -52,11 +69,11 @@ ds = load_from_disk("data/processed/resume_ner_hf")  # BERT
 
 ## Dataset Summary
 
-| Split | Resumes | Chunks |
+| Split | Resumes | Chunks (BERT) |
 |---|---|---|
-| train | 1,726 | 5,066 |
-| validation | 371 | 1,099 |
-| test | 371 | 1,082 |
+| train | 1,739 | 5,098 |
+| validation | 372 | 1,089 |
+| test | 372 | 1,044 |
 
 Each row is a 512-token sliding-window chunk (stride = 128). Long resumes produce multiple consecutive chunks sharing the same `resume_idx`.
 
