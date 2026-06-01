@@ -147,6 +147,7 @@ log_data = {
     "test_precision":       test_results["precision"],
     "test_recall":          test_results["recall"],
     "test_f1":              test_results["f1"],
+    "training_time_sec":    round(training_time, 2),
     "training_time_min":    round(training_time / 60, 2),
     "max_gpu_memory_gb":    round(max_gpu_mem, 2),
     "device":               device,

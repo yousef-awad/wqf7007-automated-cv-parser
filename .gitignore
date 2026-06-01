@@ -20,3 +20,10 @@ scripts
 # The dashboard is its own standalone git repo (deployed to a Hugging Face Space)
 dashboard/
 logs/
+# Local-only / sensitive — never publish
+# tests/ holds real-PII sample resumes used for manual checks
+tests/
+.antigravitycli/
+WQF7007_Project-Prposal.pdf
+notebooks/02_dataset_exploration.ipynb
+scratch_*.py
